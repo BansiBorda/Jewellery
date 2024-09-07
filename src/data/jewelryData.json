@@ -1,0 +1,14 @@
+
+{
+  "sliderImages": [
+    { "uri": "../../assets/images/neck.jpg" },
+    { "uri": "../../assets/images/slider2.jpg" },
+    { "uri": "../../assets/images/slider3.jpg" }
+  ],
+  "jewelryItems": [
+    { "id": "1", "category": "necklace", "imageUri": "../../assets/images/neck.jpg", "name": "Gold Necklace" },
+    { "id": "2", "category": "24-carat", "imageUri": "../../assets/images/slider2.jpg", "name": "Diamond Ring" },
+    { "id": "3", "category": "22-carat", "imageUri": "../../assets/images/slider3.jpg", "name": "Emerald Bracelet" },
+    { "id": "1", "category": "necklace", "imageUri": "../../assets/images/neck.jpg", "name": "Gold Necklace" }
+  ]
+}
