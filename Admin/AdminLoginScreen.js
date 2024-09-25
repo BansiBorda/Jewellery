@@ -29,6 +29,7 @@ const AdminLoginScreen = ({ navigation, setIsAuthenticated, setIsAdmin }) => {
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
+                placeholderTextColor="#ddd" // Color for placeholder text
               />
             </View>
             <View style={styles.inputContainer}>
@@ -38,6 +39,7 @@ const AdminLoginScreen = ({ navigation, setIsAuthenticated, setIsAdmin }) => {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                placeholderTextColor="#ddd" // Color for placeholder text
               />
             </View>
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -63,19 +65,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent black overlay
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Increased opacity for better readability
   },
   container: {
     width: '90%',
     padding: 24,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Darker background for better contrast
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 24,
-    color: '#fff', // White text color
+    color: '#FFD700', // Bright yellow color for the title
     textAlign: 'center',
   },
   inputContainer: {
@@ -87,11 +89,12 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 40,
+    height: 50,
     marginLeft: 8,
     paddingHorizontal: 8,
     backgroundColor: 'transparent', // Transparent input background
     color: '#fff', // White text color
+    fontSize: 16,
   },
   errorText: {
     color: 'red',
@@ -99,24 +102,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loginButton: {
-    backgroundColor: '#ff9800', // Orange background for the button
+    backgroundColor: '#FFD700', // Yellow background for the button
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+    marginTop: 10,
   },
   loginButtonText: {
     fontSize: 16,
-    color: '#fff', // White text color
+    color: '#000', // Black text color for better contrast against yellow
     fontWeight: 'bold',
   },
   forgotPassword: {
     marginTop: 16,
+    alignItems: 'center',
   },
   forgotPasswordText: {
-    color: '#ff9800', // Orange color for forgot password link
+    color: '#FFD700', // Yellow color for the forgot password link
     fontSize: 14,
   },
 });

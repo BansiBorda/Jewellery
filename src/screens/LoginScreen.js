@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   Animated,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 
@@ -26,48 +28,42 @@ const LoginScreen = ({ navigation }) => {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  });
+  }, [fadeAnim]);
 
   const handleLogin = async () => {
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
-  
-    // Email validation regex
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email');
       return;
     }
-  
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
     }
-  
+
     try {
       const userSnapshot = await firestore().collection('users').doc(email).get();
-  
+
       if (userSnapshot.exists) {
         navigation.replace('MainTabs');
       } else {
         setError('User not found. Please register.');
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }).start(() => {
+        setTimeout(() => {
           navigation.navigate('Register');
-        });
+        }, 2000);
       }
     } catch (err) {
       console.error('Error during login:', err);
       setError('An error occurred. Please try again.');
     }
   };
-  
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -76,8 +72,11 @@ const LoginScreen = ({ navigation }) => {
         style={styles.background}
         resizeMode="cover"
       >
-        <View style={styles.overlay}>
-          <Animated.View style={[styles.container]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.overlay}
+        >
+          <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
             <Text style={styles.logo}>Luxury Jewels</Text>
             <Text style={styles.title}>Welcome Back</Text>
             <View style={styles.inputContainer}>
@@ -115,7 +114,7 @@ const LoginScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </View>
+        </KeyboardAvoidingView>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -132,7 +131,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Darker overlay for better text contrast
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -156,7 +155,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5
+    textShadowRadius: 5,
   },
   inputContainer: {
     marginBottom: 20,
@@ -169,7 +168,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#FFD700',
-    color:"black"
+    color: "black",
+    elevation: 3, // Adds a subtle shadow
   },
   errorText: {
     color: '#e74c3c',
@@ -205,6 +205,10 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     marginLeft: 5,
     fontWeight: '600',
+  },
+  adminContainer: {
+    marginTop: 10,
+    alignItems: 'center',
   },
 });
 

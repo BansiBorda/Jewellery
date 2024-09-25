@@ -1,7 +1,9 @@
+// HomeScreen.js
 import React, { useState, useEffect, useRef } from 'react';
 import { View, FlatList, StyleSheet, Dimensions, Text, TouchableOpacity, Animated, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getFirestore, collection, getDocs } from '@react-native-firebase/firestore';
+import ProductScreen from './ProductScreen';
 
 const sliderImages = [
   { uri: require('../../assets/images/neck.jpg') },
@@ -61,15 +63,15 @@ const HomeScreen = () => {
   };
 
   const renderSliderItem = ({ item }) => (
-    <Image 
+    <Image
       source={item.uri}
       style={styles.sliderImage}
     />
   );
 
   const renderJewelryItem = ({ item }) => (
-    <TouchableOpacity 
-      onPress={() => navigation.navigate('JewelryCard', { item })}
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ProductScreen', { item })}
       style={styles.jewelryCard}
     >
       <Image source={{ uri: item.imageUri }} style={styles.jewelryImage} />
@@ -78,6 +80,7 @@ const HomeScreen = () => {
         <Text style={styles.jewelryPrice}>${item.price}</Text>
       </View>
     </TouchableOpacity>
+
   );
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, Text, ImageBackground, SafeAreaView, Animated, Dimensions } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Text, ImageBackground, SafeAreaView, Animated, Dimensions, Image } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const { width, height } = Dimensions.get('window');
 
@@ -8,6 +9,7 @@ const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [profileImage, setProfileImage] = useState(null);
   const [error, setError] = useState('');
   const [fadeAnim] = useState(new Animated.Value(1));
 
@@ -16,28 +18,27 @@ const RegisterScreen = ({ navigation }) => {
       setError('Please fill in all fields');
       return;
     }
-
-    // Email validation regex
+  
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+  
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email');
       return;
     }
-
+  
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
     }
-
+  
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
+  
     try {
       const userSnapshot = await firestore().collection('users').doc(email).get();
-
+  
       if (userSnapshot.exists) {
         setError('User already exists. Please login.');
         Animated.timing(fadeAnim, {
@@ -50,16 +51,26 @@ const RegisterScreen = ({ navigation }) => {
       } else {
         await firestore().collection('users').doc(email).set({
           email,
-          password,
+          password, // Consider not storing plain passwords
+          profileImage,
           createdAt: firestore.FieldValue.serverTimestamp(),
         });
-
-        navigation.replace('MainTabs');
+  
+        navigation.replace('MainTabs', { user: { email, profileImage } });
       }
     } catch (err) {
       console.error('Error during registration:', err);
       setError('An error occurred. Please try again.');
     }
+  };
+  
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
+      if (response.assets) {
+        setProfileImage(response.assets[0].uri);
+      }
+    });
   };
 
   return (
@@ -72,6 +83,12 @@ const RegisterScreen = ({ navigation }) => {
         <View style={styles.overlay}>
           <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
             <Text style={styles.title}>Join Luxury Jewels</Text>
+            <TouchableOpacity onPress={selectImage}>
+              <Image
+                source={profileImage ? { uri: profileImage } : require('../../assets/neck.jpg')}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
@@ -157,7 +174,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#FFD700',
-    color: "black"
+    color: 'black',
   },
   errorText: {
     color: '#e74c3c',
@@ -193,6 +210,13 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     marginLeft: 5,
     fontWeight: '600',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
+    backgroundColor: '#444',
   },
 });
 

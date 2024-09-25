@@ -30,7 +30,7 @@ const AdminDashboardScreen = () => {
     };
 
     fetchItems();
-  }, );
+  });
 
   const addItem = async () => {
     if (name && price && imageUri && description && category) {
@@ -100,17 +100,13 @@ const AdminDashboardScreen = () => {
     }
   };
 
-   React.useLayoutEffect(() => {
+  React.useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            if (navigation.canGoBack()) {
-              navigation.goBack();
-            } else {
-              navigation.navigate('AnotherScreen'); // or any fallback screen
-            }
+            navigation.navigate('AdminLogin'); // Navigate to AdminLoginScreen
           }}
         >
           <Text style={styles.backButtonText}>{'<'}</Text>
@@ -207,16 +203,6 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#121212',
   },
-  header: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#121212',
-    backgroundColor: 'gold',
-    paddingVertical: 10,
-    textAlign: 'center',
-    borderRadius: 10,
-    marginBottom: 20,
-  },
   input: {
     borderWidth: 1,
     borderColor: '#1c1c1c',
@@ -229,12 +215,15 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
   categoryButton: {
+    flex: 1,
+    margin: 4,
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    alignItems: 'center',
     backgroundColor: '#1c1c1c',
     borderRadius: 20,
     borderWidth: 2,
@@ -253,9 +242,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'gold',
     borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal: 20,
     alignItems: 'center',
-    marginTop: 10,
+    marginVertical: 10,
   },
   buttonText: {
     color: '#121212',

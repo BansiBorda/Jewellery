@@ -1,14 +1,33 @@
-// MainTabs.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import CartScreen from '../screens/CartScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
-import LogoutScreen from '../screens/LogoutScreen'; 
+import LogoutScreen from '../screens/LogoutScreen';
+import ProductScreen from '../screens/ProductScreen'; // Import ProductScreen
+import OrderScreen from '../screens/OrdersScreen';
+import OrdersListScreen from '../screens/OrdersListScreen';
+import WishlistScreen from '../screens/WishlistScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+const ProductStack = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerStyle: { backgroundColor: 'black' },
+      headerTintColor: 'gold',
+      headerTitleStyle: { fontWeight: 'bold' },
+    }}
+  >
+    <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+    <Stack.Screen name="ProductScreen" component={ProductScreen} />
+    <Stack.Screen name="OrderScreen" component={OrderScreen} />
+  </Stack.Navigator>
+);
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const [modalVisible, setModalVisible] = React.useState(false);
@@ -29,7 +48,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         const icon = {
           Home: '🏠',
           Cart: '🛒',
-          Profile: '👤',
+          WishlistScreen: '❤️',
           Logout: '🚪',
         }[route.name];
 
@@ -84,20 +103,24 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   );
 };
 
-const MainTabs = () => (
-  <Tab.Navigator
-    tabBar={props => <CustomTabBar {...props} />}
-    screenOptions={{
-      tabBarShowLabel: false,
-      headerShown: false,
-    }}
-  >
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Cart" component={CartScreen} />
-    <Tab.Screen name="Profile" component={UserProfileScreen} />
-    <Tab.Screen name="Logout" component={LogoutScreen} />
-  </Tab.Navigator>
-);
+const MainTabs = ({ route }) => {
+
+
+  return (
+    <Tab.Navigator
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{
+        tabBarShowLabel: false,
+        headerShown: false,
+      }}
+    >
+      <Tab.Screen name="Home" component={ProductStack} />
+      <Tab.Screen name="Cart" component={CartScreen} />
+      <Tab.Screen name="WishlistScreen" component={WishlistScreen} />
+      <Tab.Screen name="Logout" component={LogoutScreen} />
+    </Tab.Navigator>
+  );
+};
 
 const styles = StyleSheet.create({
   tabBar: {
@@ -129,7 +152,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   iconTextFocused: {
-    color: 'black', 
+    color: 'black',
   },
   modalContainer: {
     flex: 1,
@@ -147,7 +170,7 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 18,
     marginBottom: 20,
-    color:'black'
+    color: 'black',
   },
   modalButtons: {
     flexDirection: 'row',
