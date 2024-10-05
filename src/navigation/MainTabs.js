@@ -1,16 +1,16 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
+import auth from '@react-native-firebase/auth';
 
 import HomeScreen from '../screens/HomeScreen';
 import CartScreen from '../screens/CartScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
-import LogoutScreen from '../screens/LogoutScreen';
-import ProductScreen from '../screens/ProductScreen'; // Import ProductScreen
+import ProductScreen from '../screens/ProductScreen';
 import OrderScreen from '../screens/OrdersScreen';
-import OrdersListScreen from '../screens/OrdersListScreen';
 import WishlistScreen from '../screens/WishlistScreen';
+import LoginScreen from '../screens/LoginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -18,8 +18,8 @@ const Stack = createStackNavigator();
 const ProductStack = () => (
   <Stack.Navigator
     screenOptions={{
-      headerStyle: { backgroundColor: 'black' },
-      headerTintColor: 'gold',
+      headerStyle: { backgroundColor: '#FF9999' }, // Main soft pink for headers
+      headerTintColor: 'white',
       headerTitleStyle: { fontWeight: 'bold' },
     }}
   >
@@ -36,40 +36,37 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     setModalVisible(true);
   };
 
-  const confirmLogout = () => {
-    // Implement logout logic here if needed
-    navigation.navigate('Login'); // Navigate to Login screen
+  const confirmLogout = async () => {
+    try {
+      await auth().signOut(); // Sign out the user from Firebase
+      navigation.navigate('Login'); // Navigate to Login screen
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
+  };
+
+  // Replace these URLs with your actual image URLs
+  const iconUrls = {
+    Home: 'https://em-content.zobj.net/source/apple/271/house_1f3e0.png',
+    Cart: 'https://em-content.zobj.net/source/apple/81/shopping-trolley_1f6d2.png',
+    Wishlist: 'https://www.clipartmax.com/png/full/296-2961300_heart-love-red-whatsapp-emoji-emotion-emotions-big-heart-emoji.png',
+    Logout: 'https://icons.iconarchive.com/icons/custom-icon-design/pretty-office-6/128/logout-icon.png',
   };
 
   return (
     <View style={styles.tabBar}>
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;
-        const icon = {
-          Home: '🏠',
-          Cart: '🛒',
-          WishlistScreen: '❤️',
-          Logout: '🚪',
-        }[route.name];
+        const iconUrl = iconUrls[route.name];
 
-        return route.name !== 'Logout' ? (
+        return (
           <TouchableOpacity
             key={index}
-            onPress={() => navigation.navigate(route.name)}
+            onPress={route.name === 'Logout' ? handleLogout : () => navigation.navigate(route.name)}
             style={styles.tabButton}
           >
             <View style={[styles.iconContainer, isFocused && styles.iconContainerFocused]}>
-              <Text style={[styles.iconText, isFocused && styles.iconTextFocused]}>{icon}</Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            key={index}
-            onPress={handleLogout}
-            style={styles.tabButton}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.iconText}>{icon}</Text>
+              <Image source={{ uri: iconUrl }} style={[styles.iconImage, isFocused && styles.iconImageFocused]} />
             </View>
           </TouchableOpacity>
         );
@@ -103,9 +100,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   );
 };
 
-const MainTabs = ({ route }) => {
-
-
+const MainTabs = () => {
   return (
     <Tab.Navigator
       tabBar={props => <CustomTabBar {...props} />}
@@ -116,8 +111,8 @@ const MainTabs = ({ route }) => {
     >
       <Tab.Screen name="Home" component={ProductStack} />
       <Tab.Screen name="Cart" component={CartScreen} />
-      <Tab.Screen name="WishlistScreen" component={WishlistScreen} />
-      <Tab.Screen name="Logout" component={LogoutScreen} />
+      <Tab.Screen name="Wishlist" component={WishlistScreen} />
+      <Tab.Screen name="Logout" component={LoginScreen} />
     </Tab.Navigator>
   );
 };
@@ -127,9 +122,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    backgroundColor: 'black',
+    backgroundColor: '#FFB2C1', // Light pink background for the tab bar
     height: 70,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#FF9999', // Soft pink border for the tab bar
   },
   tabButton: {
     flex: 1,
@@ -140,19 +137,20 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'black',
+    backgroundColor: '#FF9999', // Soft pink for focused icons
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconContainerFocused: {
-    backgroundColor: 'gold',
+    backgroundColor: '#FFB2C1', // Light pink for focused icons
   },
-  iconText: {
-    fontSize: 24,
-    color: 'white',
+  iconImage: {
+    width: 30,
+    height: 30, // Adjust the size of the image as needed
+    resizeMode: 'contain',
   },
-  iconTextFocused: {
-    color: 'black',
+  iconImageFocused: {
+    // Styles for focused image (if different from normal)
   },
   modalContainer: {
     flex: 1,

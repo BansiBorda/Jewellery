@@ -1,11 +1,15 @@
+// AdminTabs.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity } from 'react-native';
 import AdminDashboardScreen from './AdminDashboard';
-import FindOrdersScreen from './FindOrdersScreen';
-import { useNavigation } from '@react-navigation/native';
 import AdminUserManagementScreen from './AdminUserManagementScreen';
 import LogoutScreen from '../src/screens/LogoutScreen';
+import AdminCartScreen from './AdminCartScreen';
+import AdminPurchaseHistoryScreen from './AdminPurchasesScreen'; // Import the new screen
+import { useNavigation } from '@react-navigation/native';
+
+const Tab = createBottomTabNavigator();
 
 // Helper component for custom tab bar icon
 const TabBarIcon = ({ label }) => (
@@ -33,13 +37,11 @@ const LogoutButton = () => {
   );
 };
 
-const Tab = createBottomTabNavigator();
-
 const AdminTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: false,
+        // headerShown: false,
         tabBarActiveTintColor: 'gold',
         tabBarStyle: { backgroundColor: 'black' },
         tabBarLabelStyle: { color: 'white', fontSize: 14 },
@@ -55,8 +57,8 @@ const AdminTabs = () => {
         }}
       />
       <Tab.Screen
-        name="FindOrders"
-        component={FindOrdersScreen}
+        name="AdminCart"
+        component={AdminCartScreen}
         options={{
           title: 'Find Orders',
           tabBarIcon: () => <TabBarIcon label="🔍" />,
@@ -64,23 +66,15 @@ const AdminTabs = () => {
         }}
       />
       <Tab.Screen
-        name="ManageUsers"
-        component={AdminUserManagementScreen}
+        name="AdminPurchaseHistory"
+        component={AdminPurchaseHistoryScreen}
         options={{
-          title: 'Manage Users',
-          tabBarIcon: () => <TabBarIcon label="👥" />,// Example user management icon
-          tabBarLabel: 'Manage Users',
+          title: 'Purchase History',
+          tabBarIcon: () => <TabBarIcon label="📜" />,
+          tabBarLabel: 'Purchase History',
         }}
       />
-       <Tab.Screen
-        name="Logout"
-        component={LogoutScreen}
-        options={{
-          title: 'Logout',
-          tabBarIcon: () => <TabBarIcon label="🚪" />, // Logout icon
-          tabBarLabel: 'Logout',
-        }}
-      />
+
     </Tab.Navigator>
   );
 };

@@ -10,7 +10,6 @@ import AdminLoginScreen from '../../Admin/AdminLoginScreen';
 import AdminNavigator from './AdminNavigator';
 import ProductScreen from '../screens/ProductScreen';
 import CartScreen from '../screens/CartScreen';
-import CheckoutScreen from '../screens/CheckoutScreen';
 import OrderScreen from '../screens/OrdersScreen';
 
 const Stack = createStackNavigator();
@@ -43,11 +42,11 @@ const AppNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
-            backgroundColor: 'black',
+            backgroundColor: '#FF9999', // Header background color
             elevation: 0,
             shadowOpacity: 0,
           },
-          headerTintColor: 'gold',
+          headerTintColor: 'white', // Header text color
           headerTitleStyle: {
             fontWeight: 'bold',
             fontSize: 18,
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 18,
-    color: 'gold',
+    color: '#FF9999', // Loading text color to soft pink
   },
 });
 

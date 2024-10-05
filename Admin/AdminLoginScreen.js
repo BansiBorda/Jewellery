@@ -1,128 +1,152 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity, ImageBackground, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { 
+  View, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Text, 
+  SafeAreaView, 
+  ImageBackground, 
+  TouchableWithoutFeedback, 
+  Keyboard 
+} from 'react-native';
 
 const AdminLoginScreen = ({ navigation, setIsAuthenticated, setIsAdmin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate=useNavigation()
 
   const handleLogin = () => {
     if (email === 'admin@gmail.com' && password === '123') {
       setIsAuthenticated(true);
       setIsAdmin(true);
+      
     } else {
       setError('Invalid credentials');
     }
   };
 
   return (
-    <ImageBackground source={require('../assets/images/slider2.jpg')} style={styles.background}>
+    <ImageBackground 
+      source={{ uri: 'https://www.royaljewelry.com/public/link/website/images/social-bg-2.webp' }}  // Image URL
+      style={styles.backgroundImage}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.overlay}>
-          <View style={styles.container}>
-            <Text style={styles.title}>Admin Login</Text>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                placeholderTextColor="#ddd" // Color for placeholder text
-              />
-            </View>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor="#ddd" // Color for placeholder text
-              />
-            </View>
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>Admin Portal</Text>
           </View>
-        </View>
+          <Text style={styles.subtitle}>Please log in to access the admin features.</Text>
+          <Text style={styles.title}>Welcome Back</Text>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#A9A9A9" // Grey for placeholder text
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#A9A9A9" // Grey for placeholder text
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+            <Text style={styles.link}>Forgot Password?</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.link}>User Login</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
       </TouchableWithoutFeedback>
     </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  background: {
+  backgroundImage: {
     flex: 1,
     resizeMode: 'cover',
-    justifyContent: 'center',
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Increased opacity for better readability
   },
   container: {
-    width: '90%',
-    padding: 24,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Darker background for better contrast
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#FF9AAB', // Use your specified color for logo
+    fontFamily: 'Georgia', // Classic font
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#fff', // White color for subtitle
+    textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: 'Arial', // Change font family for subtitle
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    color: '#FFD700', // Bright yellow color for the title
+    color: '#fff', // White color for title
     textAlign: 'center',
+    marginBottom: 30,
+    fontWeight: 'bold',
+    fontFamily: 'Arial', // Change font family for title
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Lighter background for inputs
+    borderRadius: 8,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#FF9AAB', // Light pink border
   },
   input: {
-    flex: 1,
-    height: 50,
-    marginLeft: 8,
-    paddingHorizontal: 8,
-    backgroundColor: 'transparent', // Transparent input background
-    color: '#fff', // White text color
+    height: 55,
+    color: '#333', // Dark color for input text
+    paddingHorizontal: 15,
     fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#FF9AAB', // Use the specified color
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff', // White text for button
+    fontWeight: 'bold',
+    fontSize: 18,
   },
   errorText: {
-    color: 'red',
-    marginBottom: 16,
+    color: '#FF6B6B', // Red for error messages
+    marginBottom: 15,
     textAlign: 'center',
   },
-  loginButton: {
-    backgroundColor: '#FFD700', // Yellow background for the button
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    marginTop: 10,
-  },
-  loginButtonText: {
+  link: {
+    color: 'white', // Light pink for link
+    marginTop: 15,
+    textAlign: 'center',
     fontSize: 16,
-    color: '#000', // Black text color for better contrast against yellow
-    fontWeight: 'bold',
-  },
-  forgotPassword: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  forgotPasswordText: {
-    color: '#FFD700', // Yellow color for the forgot password link
-    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
 

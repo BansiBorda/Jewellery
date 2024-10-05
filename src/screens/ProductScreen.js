@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import {
+    View,
+    Text,
+    Image,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    Dimensions,
+    ToastAndroid,
+} from 'react-native';
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { Picker } from '@react-native-picker/picker';
+
+const { width } = Dimensions.get('window');
 
 const ProductScreen = ({ route, navigation }) => {
     const { item } = route.params || {};
+    const [selectedSize, setSelectedSize] = useState('10');
+    const [quantity, setQuantity] = useState(1);
     const [isInWishlist, setIsInWishlist] = useState(false);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [modalMessage, setModalMessage] = useState('');
     const firestore = getFirestore();
+
+    // Calculate total price based on quantity without using toFixed
+    const totalPrice = item.price * quantity;
 
     useEffect(() => {
         const fetchWishlist = async () => {
             try {
                 const querySnapshot = await getDocs(collection(firestore, 'wishlistItems'));
-                const wishlistItems = querySnapshot.docs.map(doc => doc.data());
+                const wishlistItems = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setIsInWishlist(wishlistItems.some(wishlistItem => wishlistItem.id === item.id));
             } catch (error) {
                 console.error('Failed to fetch wishlist:', error);
@@ -25,23 +41,16 @@ const ProductScreen = ({ route, navigation }) => {
 
     const handleAddToCart = async () => {
         try {
-            const cartRef = collection(firestore, 'cartItems');
-            const querySnapshot = await getDocs(cartRef);
-            const cartItems = querySnapshot.docs.map(doc => doc.data());
-            const isItemInCart = cartItems.some(cartItem => cartItem.id === item.id);
-
-            if (!isItemInCart) {
-                await addDoc(cartRef, item);
-                setModalMessage('Item added to cart!');
-                setIsModalVisible(true);
-                setTimeout(() => {
-                    setIsModalVisible(false);
-                    navigation.navigate('Cart'); // Navigate to CartScreen
-                }, 1000); // Wait for the modal to show for a second
-            } else {
-                setModalMessage('Item is already in the cart!');
-                setIsModalVisible(true);
+            const currentUser = auth().currentUser;
+            if (!currentUser) {
+                throw new Error('User is not logged in');
             }
+
+            const cartRef = collection(firestore, 'users', currentUser.uid, 'cartItems');
+            // Add the item along with its quantity to Firestore
+            await addDoc(cartRef, { ...item, quantity }); 
+            ToastAndroid.show('Added to cart!', ToastAndroid.SHORT);
+            navigation.navigate('Cart'); // Navigate to Cart screen after adding
         } catch (error) {
             console.error('Failed to add item to cart:', error);
         }
@@ -58,11 +67,11 @@ const ProductScreen = ({ route, navigation }) => {
             if (existingWishlistItem) {
                 await deleteDoc(doc(wishlistRef, existingWishlistItem.id));
                 setIsInWishlist(false);
-                alert('Item removed from wishlist');
+                ToastAndroid.show('Removed from wishlist', ToastAndroid.SHORT);
             } else {
                 await addDoc(wishlistRef, item);
                 setIsInWishlist(true);
-                alert('Item added to wishlist');
+                ToastAndroid.show('Added to wishlist!', ToastAndroid.SHORT);
             }
         } catch (error) {
             console.error('Failed to update wishlist:', error);
@@ -70,126 +79,188 @@ const ProductScreen = ({ route, navigation }) => {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Image source={{ uri: item.imageUri }} style={styles.image} />
-            <View style={styles.header}>
-                <Text style={styles.name}>{item.name}</Text>
+        <ScrollView style={styles.container}>
+            <View style={styles.headerContainer}>
+                <Text style={styles.pageIndicator}>01/07</Text>
                 <TouchableOpacity onPress={handleToggleWishlist}>
-                    <Text style={styles.emoji}>{isInWishlist ? '❤️' : '🤍'}</Text>
+                    <Image
+                        source={{
+                            uri: isInWishlist
+                                ? 'https://www.clipartmax.com/png/full/296-2961300_heart-love-red-whatsapp-emoji-emotion-emotions-big-heart-emoji.png'
+                                : 'https://emojigraph.org/media/emojipedia/white-heart_1f90d.png',
+                        }}
+                        style={styles.wishlistIcon}
+                    />
                 </TouchableOpacity>
             </View>
-            <Text style={styles.price}>${item.price}</Text>
-            <Text style={styles.description}>{item.description}</Text>
 
-            <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
-                <Text style={styles.buttonText}>Add to Cart</Text>
-            </TouchableOpacity>
+            <Image source={{ uri: item.imageUri }} style={styles.image} />
 
-            <View style={styles.reviewsSection}>
-                <Text style={styles.reviewsTitle}>Reviews</Text>
-                <Text style={styles.review}>No reviews yet.</Text>
-            </View>
+            <View style={styles.contentContainer}>
+                <Text style={styles.collection}>Mother's Day Collection 2020</Text>
+                <Text style={styles.name}>{item.name}</Text>
 
-            <Modal
-                transparent={true}
-                visible={isModalVisible}
-                animationType="fade"
-                onRequestClose={() => setIsModalVisible(false)}
-            >
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalText}>{modalMessage}</Text>
+                <View style={styles.infoContainer}>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.infoTitle}>Width</Text>
+                        <Text style={styles.infoValue}>2-3 mm</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.infoTitle}>Weight</Text>
+                        <Text style={styles.infoValue}>18.0g</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.infoTitle}>Gold Karat</Text>
+                        <Text style={styles.infoValue}>10k</Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Text style={styles.infoTitle}>Warranty</Text>
+                        <Text style={styles.infoValue}>90 days</Text>
                     </View>
                 </View>
-            </Modal>
+
+                <View style={styles.controlsContainer}>
+                    <View style={styles.pickerContainer}>
+                        <Text style={styles.pickerLabel}>Size</Text>
+                        <Picker
+                            selectedValue={selectedSize}
+                            onValueChange={(itemValue) => setSelectedSize(itemValue)}
+                            style={styles.picker}
+                        >
+                            <Picker.Item label="10" value="10" />
+                            <Picker.Item label="11" value="11" />
+                            <Picker.Item label="12" value="12" />
+                        </Picker>
+                    </View>
+
+                    <View style={styles.quantityContainer}>
+                        <Text style={styles.pickerLabel}>Quantity</Text>
+                        <View style={styles.quantityControls}>
+                            <TouchableOpacity onPress={() => setQuantity(Math.max(1, quantity - 1))}>
+                                <Text style={styles.quantityControlButton}>-</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.quantityText}>{quantity}</Text>
+                            <TouchableOpacity onPress={() => setQuantity(quantity + 1)}>
+                                <Text style={styles.quantityControlButton}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={styles.priceContainer}>
+                    <Text style={styles.price}>€{totalPrice}</Text>
+                </View>
+                <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
+                    <Text style={styles.buttonText}>Add to cart</Text>
+                </TouchableOpacity>
+            </View>
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
-        backgroundColor: '#121212',
-        padding: 20,
+        flex: 1,
+        backgroundColor: '#FFFFFF',
     },
-    header: {
+    headerContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+    },
+    pageIndicator: {
+        color: '#333',
+        fontSize: 16,
+    },
+    wishlistIcon: {
+        width: 24,
+        height: 24,
     },
     image: {
-        width: '100%',
-        height: 300,
+        width: width,
+        height: width * 1.2,
         resizeMode: 'cover',
-        borderRadius: 10,
-        borderWidth: 2,
-        borderColor: '#FFD700',
-        marginBottom: 20,
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+    },
+    contentContainer: {
+        padding: 20,
+        backgroundColor: '#f8f8f8',
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+        marginTop: -20,
+    },
+    collection: {
+        color: '#777',
+        fontSize: 14,
     },
     name: {
-        color: '#FFD700',
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginVertical: 10,
+    },
+    infoContainer: {
+        marginVertical: 20,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginVertical: 5,
+    },
+    infoTitle: {
+        color: '#555',
+    },
+    infoValue: {
+        fontWeight: 'bold',
+    },
+    controlsContainer: {
+        marginVertical: 20,
+    },
+    pickerContainer: {
+        marginVertical: 10,
+    },
+    pickerLabel: {
+        fontSize: 16,
+    },
+    picker: {
+        height: 50,
+    },
+    quantityContainer: {
+        marginVertical: 10,
+    },
+    quantityControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    quantityControlButton: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        width: 30,
+        textAlign: 'center',
+        fontSize: 20,
+    },
+    quantityText: {
+        marginHorizontal: 15,
+        fontSize: 18,
+    },
+    priceContainer: {
+        marginVertical: 10,
     },
     price: {
-        color: '#FFD700',
-        fontSize: 22,
-        marginBottom: 20,
+        fontSize: 24,
+        fontWeight: 'bold',
     },
-    description: {
-        color: '#fff',
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    button: {
-        backgroundColor: '#FFD700',
-        paddingVertical: 15,
-        borderRadius: 25,
+    addToCartButton: {
+        backgroundColor: '#5cb85c',
+        padding: 15,
+        borderRadius: 5,
         alignItems: 'center',
-        marginBottom: 20,
     },
     buttonText: {
-        color: '#000',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    reviewsSection: {
-        marginTop: 20,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#444',
-    },
-    reviewsTitle: {
-        color: '#FFD700',
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    review: {
         color: '#fff',
-        fontSize: 16,
-    },
-    emoji: {
-        fontSize: 28,
-    },
-    modalBackground: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContainer: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        width: '80%',
-        alignItems: 'center',
-    },
-    modalText: {
-        fontSize: 18,
-        color: '#000',
+        fontWeight: 'bold',
     },
 });
 

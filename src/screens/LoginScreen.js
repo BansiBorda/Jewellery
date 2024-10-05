@@ -1,214 +1,156 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Text,
-  ImageBackground,
-  SafeAreaView,
-  Animated,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Text, SafeAreaView, ImageBackground } from 'react-native';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-
-const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [fadeAnim] = useState(new Animated.Value(0));
-
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please fill in all fields');
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setError('Please enter a valid email address');
       return;
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email');
-      return;
-    }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
     }
 
     try {
-      const userSnapshot = await firestore().collection('users').doc(email).get();
-
-      if (userSnapshot.exists) {
-        navigation.replace('MainTabs');
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        console.log('User Data:', userDoc.data());
       } else {
-        setError('User not found. Please register.');
-        setTimeout(() => {
-          navigation.navigate('Register');
-        }, 2000);
+        console.log('No such user data!');
       }
+
+      navigation.replace('MainTabs');
     } catch (err) {
-      console.error('Error during login:', err);
-      setError('An error occurred. Please try again.');
+      setError(err.message);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ImageBackground
-        source={require('../../assets/images/slider2.jpg')}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.overlay}
-        >
-          <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-            <Text style={styles.logo}>Luxury Jewels</Text>
-            <Text style={styles.title}>Welcome Back</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#ddd"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#ddd"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoText}>Don't have an account?</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.link}> Register</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.adminContainer}>
-              <TouchableOpacity onPress={() => navigation.navigate('AdminLogin')}>
-                <Text style={styles.link}>Login as Admin</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </KeyboardAvoidingView>
-      </ImageBackground>
-    </SafeAreaView>
+    <ImageBackground
+      source={{ uri: 'https://www.royaljewelry.com/public/link/website/images/social-bg-2.webp' }}  // Image URL
+      style={styles.backgroundImage}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>Jewelry Heaven</Text>
+        </View>
+        <Text style={styles.subtitle}>Your one-stop destination for exquisite jewelry. Please login to continue.</Text>
+        <Text style={styles.title}>Welcome Back</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#ddd"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#ddd"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.link}>Don't have an account? Register</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('AdminLogin')}>
+          <Text style={styles.link}>Admin Login</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  backgroundImage: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Darker overlay for better text contrast
-    justifyContent: 'center',
-    alignItems: 'center',
+    resizeMode: 'cover',
   },
   container: {
-    width: '100%',
-    maxWidth: 450,
-    padding: 30,
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20, // Added padding to avoid edge issues
   },
-  logo: {
-    fontSize: 36,
-    marginBottom: 10,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#fff', // White color for logo
+    fontFamily: 'Georgia', // Change font family for logo
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#fff', // White color for subtitle
     textAlign: 'center',
-    color: '#FFD700',
-    fontWeight: '700',
+    marginBottom: 20,
+    fontFamily: 'Arial', // Change font family for subtitle
   },
   title: {
     fontSize: 28,
-    marginBottom: 20,
+    color: '#fff', // White color for title
     textAlign: 'center',
-    color: '#FFD700',
-    fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
+    marginBottom: 30,
+    fontWeight: 'bold',
+    fontFamily: 'Arial', // Change font family for title
   },
   inputContainer: {
-    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Lighter background for inputs
+    borderRadius: 8,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#ccc', // Subtle border color
   },
   input: {
-    backgroundColor: '#ffffff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
+    height: 55,
+    color: '#333', // Dark color for input text
+    paddingHorizontal: 15,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-    color: "black",
-    elevation: 3, // Adds a subtle shadow
+  },
+  button: {
+    backgroundColor: '#FF9999', // Use a color consistent with your product screen
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  buttonText: {
+    color: '#fff', // White text for button
+    fontWeight: 'bold',
+    fontSize: 18,
   },
   errorText: {
-    color: '#e74c3c',
+    color: '#FF6B6B',
     marginBottom: 15,
     textAlign: 'center',
   },
-  button: {
-    backgroundColor: '#FFD700',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  buttonText: {
-    fontSize: 18,
-    color: '#000',
-    fontWeight: '600',
-  },
-  infoContainer: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  infoText: {
-    color: '#ffffff',
-  },
   link: {
-    color: '#FFD700',
+    color: '#fff', // White color for link
+    marginTop: 15,
+    textAlign: 'center',
+    fontSize: 16,
     textDecorationLine: 'underline',
-    marginLeft: 5,
-    fontWeight: '600',
-  },
-  adminContainer: {
-    marginTop: 10,
-    alignItems: 'center',
   },
 });
 

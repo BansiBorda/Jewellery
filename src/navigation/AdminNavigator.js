@@ -1,13 +1,15 @@
-// AdminNavigator.js
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
 import AdminTabs from '../../Admin/AdminTabs';
 import AdminLoginScreen from '../../Admin/AdminLoginScreen';
 
 const AdminStack = createStackNavigator();
 
-const AdminNavigator = ({ navigation }) => {
+
+
+const AdminNavigator = () => {
   return (
     <AdminStack.Navigator
       screenOptions={{
@@ -29,17 +31,6 @@ const AdminNavigator = ({ navigation }) => {
         name="AdminLogin"
         component={AdminLoginScreen}
         options={{
-          title: 'Admin Login',
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('Login'); // Navigate to the user login screen
-              }}
-              style={styles.backButton}
-            >
-              <Text style={styles.backButtonText}>←</Text> {/* Back Arrow using Text */}
-            </TouchableOpacity>
-          ),
         }}
       />
     </AdminStack.Navigator>
@@ -51,9 +42,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   backButtonText: {
-    color: 'gold', // Gold color for the text
-    fontSize: 18, // Adjust the font size as needed
-    fontWeight: 'bold', // Bold text for better visibility
+    color: 'gold',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

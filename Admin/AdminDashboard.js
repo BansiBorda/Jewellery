@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet, Button } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from 'react-native';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
+
+// Set the logout emoji image URL
+const logoutEmoji = { uri: 'https://icons.iconarchive.com/icons/custom-icon-design/pretty-office-6/128/logout-icon.png' };
 
 const AdminDashboardScreen = () => {
   const [name, setName] = useState('');
@@ -13,7 +16,7 @@ const AdminDashboardScreen = () => {
   const [editingItemId, setEditingItemId] = useState(null);
 
   const firestore = getFirestore();
-  const navigation = useNavigation();  // Hook for navigation
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -30,7 +33,7 @@ const AdminDashboardScreen = () => {
     };
 
     fetchItems();
-  });
+  }, [firestore]);
 
   const addItem = async () => {
     if (name && price && imageUri && description && category) {
@@ -42,11 +45,7 @@ const AdminDashboardScreen = () => {
           description,
           category,
         });
-        setName('');
-        setPrice('');
-        setImageUri('');
-        setDescription('');
-        setCategory('necklace');
+        clearForm();
       } catch (error) {
         console.error('Failed to add item:', error);
       }
@@ -63,12 +62,7 @@ const AdminDashboardScreen = () => {
           description,
           category,
         });
-        setEditingItemId(null);
-        setName('');
-        setPrice('');
-        setImageUri('');
-        setDescription('');
-        setCategory('necklace');
+        clearForm();
       } catch (error) {
         console.error('Failed to update item:', error);
       }
@@ -86,92 +80,54 @@ const AdminDashboardScreen = () => {
   const startEditItem = (item) => {
     setEditingItemId(item.id);
     setName(item.name);
-    setPrice(item.price);
+    setPrice(item.price.toString());
     setImageUri(item.imageUri);
     setDescription(item.description);
     setCategory(item.category);
   };
 
-  const filterJewelryItems = () => {
-    if (category === 'All') {
-      return jewelryItems;
-    } else {
-      return jewelryItems.filter(item => item.category === category);
-    }
+  const clearForm = () => {
+    setEditingItemId(null);
+    setName('');
+    setPrice('');
+    setImageUri('');
+    setDescription('');
+    setCategory('necklace');
   };
 
+  const filterJewelryItems = () => {
+    return category === 'All' ? jewelryItems : jewelryItems.filter(item => item.category === category);
+  };
+
+  // Set up header options with a logout button using the custom emoji
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => {
-            navigation.navigate('AdminLogin'); // Navigate to AdminLoginScreen
-          }}
-        >
-          <Text style={styles.backButtonText}>{'<'}</Text>
+      headerRight: () => (
+        <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('AdminLogin')}>
+          <Image source={logoutEmoji} style={styles.logoutImage} />
+          {/* Add a Text component to ensure proper rendering */}
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       ),
+      headerTitle: () => <Text style={styles.headerTitle}>Admin Dashboard</Text>,
     });
   }, [navigation]);
 
   return (
     <View style={styles.container}>
-      <TextInput
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Price"
-        value={price}
-        onChangeText={setPrice}
-        style={styles.input}
-        keyboardType="numeric"
-      />
-      <TextInput
-        placeholder="Image URL"
-        value={imageUri}
-        onChangeText={setImageUri}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-        style={styles.input}
-      />
+      <Text style={styles.header}>Admin Dashboard</Text>
+      <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} placeholderTextColor="#888" />
+      <TextInput placeholder="Price" value={price} onChangeText={setPrice} style={styles.input} keyboardType="numeric" placeholderTextColor="#888" />
+      <TextInput placeholder="Image URL" value={imageUri} onChangeText={setImageUri} style={styles.input} placeholderTextColor="#888" />
+      <TextInput placeholder="Description" value={description} onChangeText={setDescription} style={styles.input} placeholderTextColor="#888" />
       <View style={styles.categoryContainer}>
-        <TouchableOpacity
-          style={[styles.categoryButton, category === 'necklace' && styles.selectedCategory]}
-          onPress={() => setCategory('necklace')}
-        >
-          <Text style={styles.categoryText}>Necklace</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.categoryButton, category === 'bangle' && styles.selectedCategory]}
-          onPress={() => setCategory('bangle')}
-        >
-          <Text style={styles.categoryText}>Bangle</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.categoryButton, category === 'earring' && styles.selectedCategory]}
-          onPress={() => setCategory('earring')}
-        >
-          <Text style={styles.categoryText}>Earring</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.categoryButton, category === 'All' && styles.selectedCategory]}
-          onPress={() => setCategory('All')}
-        >
-          <Text style={styles.categoryText}>All</Text>
-        </TouchableOpacity>
+        {['necklace', 'bangle', 'earring', 'All'].map((cat) => (
+          <TouchableOpacity key={cat} style={[styles.categoryButton, category === cat && styles.selectedCategory]} onPress={() => setCategory(cat)}>
+            <Text style={styles.categoryText}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={editingItemId ? updateItem : addItem}
-      >
+      <TouchableOpacity style={styles.button} onPress={editingItemId ? updateItem : addItem}>
         <Text style={styles.buttonText}>{editingItemId ? 'Update Item' : 'Add Item'}</Text>
       </TouchableOpacity>
       <FlatList
@@ -185,8 +141,12 @@ const AdminDashboardScreen = () => {
               <Text style={styles.itemText}>Category: {item.category}</Text>
             </View>
             <View style={styles.itemActions}>
-              <Button title="Edit" onPress={() => startEditItem(item)} />
-              <Button title="Delete" onPress={() => deleteItem(item.id)} />
+              <TouchableOpacity style={styles.actionButton} onPress={() => startEditItem(item)}>
+                <Text style={styles.actionButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={() => deleteItem(item.id)}>
+                <Text style={styles.actionButtonText}>Delete</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -201,16 +161,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#121212',
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  logoutButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    flexDirection: 'row', // Ensure items are in a row
+    alignItems: 'center', // Center the content vertically
+  },
+  logoutImage: {
+    width: 30, // Set your desired width for the logout emoji
+    height: 30, // Set your desired height for the logout emoji
+  },
+  logoutText: {
+    marginLeft: 5, // Add some space between the image and text
+    color: '#333', // Text color for visibility
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#1c1c1c',
+    borderColor: '#FF6F91',
     padding: 12,
     marginBottom: 12,
-    color: 'white',
-    backgroundColor: '#2c2c2c',
-    borderRadius: 10,
+    color: '#333',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
     fontSize: 16,
   },
   categoryContainer: {
@@ -224,29 +210,26 @@ const styles = StyleSheet.create({
     margin: 4,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#FF6F91',
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#444',
   },
   selectedCategory: {
-    backgroundColor: 'gold',
-    borderColor: 'gold',
+    backgroundColor: '#FF9AAB',
   },
   categoryText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
   },
   button: {
-    backgroundColor: 'gold',
+    backgroundColor: '#FF9AAB',
     borderRadius: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     marginVertical: 10,
   },
   buttonText: {
-    color: '#121212',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -258,41 +241,40 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#FFFFFF',
     padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
-    elevation: 5,
+    elevation: 3,
   },
   itemImage: {
-    width: 100,
-    height: 100,
+    width: 70,
+    height: 70,
     borderRadius: 10,
-    borderColor: 'gold',
-    borderWidth: 2,
+    marginRight: 10,
   },
   itemDetails: {
     flex: 1,
-    marginLeft: 16,
+    justifyContent: 'center',
   },
   itemText: {
-    color: 'white',
-    marginBottom: 6,
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
+    color: '#333',
   },
   itemActions: {
-    justifyContent: 'space-between',
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  backButton: {
-    padding: 10,
+  actionButton: {
+    backgroundColor: '#FF6F91',
+    borderRadius: 5,
+    padding: 5,
+    marginLeft: 5,
   },
-  backButtonText: {
-    fontSize: 20,
-    color: 'white',
+  actionButtonText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
 });

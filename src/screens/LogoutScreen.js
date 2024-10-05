@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const LogoutScreen = () => {
   const navigation = useNavigation();
-  const [modalVisible, setModalVisible] = useState(true); // Modal is initially visible
+  const [modalVisible, setModalVisible] = useState(false); // Set to false initially
 
   const handleLogout = () => {
     // Implement any additional logout logic if needed, e.g., clearing tokens or session data
@@ -14,6 +14,11 @@ const LogoutScreen = () => {
 
   return (
     <View style={styles.container}>
+      {/* You might want to show a button to trigger the logout modal */}
+      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.logoutButton}>
+        <Text style={styles.logoutButtonText}>Log Out</Text>
+      </TouchableOpacity>
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -46,6 +51,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'black',
+  },
+  logoutButton: {
+    backgroundColor: 'gold',
+    padding: 15,
+    borderRadius: 5,
+  },
+  logoutButtonText: {
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 18,
   },
   overlay: {
     flex: 1,

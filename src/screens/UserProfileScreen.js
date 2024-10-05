@@ -1,182 +1,279 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  Animated,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  Linking,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { getFirestore, collection, getDocs } from '@react-native-firebase/firestore';
 
-const UserProfileScreen = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [profileImage, setProfileImage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const sliderImages = [
+  { uri: 'https://www.tanishq.co.in/dw/image/v2/BKCK_PRD/on/demandware.static/-/Library-Sites-TanishqSharedLibrary/default/dw3db19e7a/homepage/ShopByCollection/string-it.jpg' },
+  { uri: 'https://www.tanishq.co.in/dw/image/v2/BKCK_PRD/on/demandware.static/-/Library-Sites-TanishqSharedLibrary/default/dwb292158a/homepage/NewForYou/pretty-in-pink-new.jpg' },
+  { uri: 'https://www.tanishq.co.in/dw/image/v2/BKCK_PRD/on/demandware.static/-/Library-Sites-TanishqSharedLibrary/default/dw89ef1e4a/homepage/shopByCategory/diamond-necklace-set.jpg' },
+];
+
+const windowWidth = Dimensions.get('window').width;
+
+// Sample current prices (replace with dynamic data if needed)
+const currentPrices = [
+  { item: 'Diamond (1 Carat)', price: '$4,000' },
+  { item: '24-Carat Gold', price: '$1,800/oz' },
+];
+
+const HomeScreen = () => {
+  const [jewelryItems, setJewelryItems] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const sliderRef = useRef(null);
+  const navigation = useNavigation();
+  const firestore = getFirestore();
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchItems = async () => {
       try {
-        const currentUser = auth().currentUser;
-        if (currentUser) {
-          const userEmail = currentUser.email;
-          setEmail(userEmail); // Set the email from Firebase Authentication
-          
-          const userDoc = await firestore().collection('users').doc(userEmail).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            setName(userData.name || '');
-            setProfileImage(userData.profileImage || '');
-          } else {
-            setError('User not found');
-          }
-        } else {
-          setError('No user is logged in');
-        }
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('Failed to load user data');
-      } finally {
-        setLoading(false);
+        const querySnapshot = await getDocs(collection(firestore, 'jewelryItems'));
+        const items = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setJewelryItems(items);
+      } catch (error) {
+        console.error('Failed to fetch items:', error);
       }
     };
 
-    fetchUserData();
-  }, []);
+    fetchItems();
+  }, [firestore]);
 
-  const handleSave = async () => {
-    if (!name || !email) {
-      setError('Please fill in all fields');
-      return;
-    }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      sliderRef.current.scrollToOffset({
+        offset: (scrollX._value + windowWidth) % (windowWidth * sliderImages.length),
+        animated: true,
+      });
+    }, 3000);
 
-    try {
-      const currentUser = auth().currentUser;
-      if (currentUser) {
-        const userEmail = currentUser.email;
-        await firestore().collection('users').doc(userEmail).update({
-          name,
-          email,
-        });
-        console.log('Profile Updated:', { name, email });
-      } else {
-        setError('No user is logged in');
-      }
-    } catch (err) {
-      console.error('Error updating profile:', err);
-      setError('Failed to update profile');
+    return () => clearInterval(interval);
+  }, [scrollX]);
+
+  const filterData = () => {
+    if (selectedCategory === 'all') {
+      return jewelryItems;
     }
+    return jewelryItems.filter(item => item.category === selectedCategory);
   };
 
-  if (loading) {
-    return <ActivityIndicator size="large" color="gold" style={styles.loading} />;
-  }
+  const renderSliderItem = ({ item }) => (
+    <View style={styles.sliderItem}>
+      <Image source={{ uri: item.uri }} style={styles.sliderImage} />
+    </View>
+  );
+
+  const renderJewelryItem = ({ item }) => (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ProductScreen', { item })}
+      style={styles.jewelryCard}
+    >
+      <Image source={{ uri: item.imageUri }} style={styles.jewelryImage} />
+      <View style={styles.jewelryDetails}>
+        <Text style={styles.jewelryName}>{item.name}</Text>
+        <Text style={styles.jewelryPrice}>{item.price}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const handleWhatsAppPress = () => {
+    const phoneNumber = 'YOUR_PHONE_NUMBER'; // Replace with your WhatsApp number
+    const message = 'Hello! I have a query regarding your jewelry.';
+    const url = `whatsapp://send?text=${encodeURIComponent(message)}&phone=${phoneNumber}`;
+    Linking.openURL(url).catch((err) => console.error('An error occurred', err));
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.profileHeader}>
-        <Image
-          source={{ uri: profileImage || 'https://via.placeholder.com/100' }}
-          style={styles.profileImage}
+    <SafeAreaView style={styles.container}>
+      <View style={styles.sliderContainer}>
+        <Animated.FlatList
+          ref={sliderRef}
+          data={sliderImages}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          renderItem={renderSliderItem}
+          keyExtractor={(item, index) => index.toString()}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
         />
-        <Text style={styles.username}>{name}</Text>
-        <Text style={styles.email}>{email}</Text>
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter your name"
-          placeholderTextColor="#ddd"
-        />
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter your email"
-          placeholderTextColor="#ddd"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={false} // Make email field read-only
-        />
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Save Changes</Text>
-        </TouchableOpacity>
+
+      {/* Current Prices Section */}
+      <View style={styles.currentPricesContainer}>
+        <Text style={styles.sectionTitle}>Current Prices</Text>
+        {currentPrices.map((item) => (
+          <Text key={item.item} style={styles.priceText}>
+            {item.item}: <Text style={styles.priceValue}>{item.price}</Text>
+          </Text>
+        ))}
       </View>
-    </ScrollView>
+
+      <Text style={styles.sectionTitle}>Featured Items</Text>
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {['all', 'necklace', 'bangle', 'earring'].map(category => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => setSelectedCategory(category)}
+              style={[styles.filterButton, selectedCategory === category && styles.filterButtonActive]}
+            >
+              <Text style={[styles.filterText, selectedCategory === category && styles.filterTextActive]}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      <FlatList
+        data={filterData()}
+        renderItem={renderJewelryItem}
+        keyExtractor={item => item.id}
+        style={styles.list}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+      />
+
+      {/* WhatsApp Button */}
+      <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsAppPress}>
+        <Text style={styles.whatsappButtonText}>Chat with us on WhatsApp</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
-    padding: 20,
+    backgroundColor: '#FFF', // Clean white background
   },
-  profileHeader: {
-    alignItems: 'center',
+  sliderContainer: {
+    height: 220, // Height for the slider
     marginBottom: 20,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
-    backgroundColor: '#444',
-  },
-  username: {
-    color: 'gold',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  email: {
-    color: '#ccc',
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  formContainer: {
-    flex: 1,
-    width: '100%',
-  },
-  label: {
-    color: 'gold',
-    fontSize: 18,
-    marginBottom: 5,
-    fontWeight: 'bold',
-  },
-  input: {
-    height: 50,
-    borderColor: 'gold',
-    borderBottomWidth: 2,
-    marginBottom: 20,
-    color: '#fff',
-    width: '100%',
-    paddingHorizontal: 15,
-    fontSize: 18,
-  },
-  button: {
-    backgroundColor: 'gold',
-    padding: 15,
+  sliderItem: {
+    width: windowWidth,
+    height: '100%',
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
+    overflow: 'hidden',
   },
-  buttonText: {
-    color: '#000',
+  sliderImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  sectionTitle: {
+    color: '#2A2A2A', // Dark color for titles
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginLeft: 20,
+    marginBottom: 10,
+  },
+  currentPricesContainer: {
+    padding: 10,
+    marginHorizontal: 10,
+    marginBottom: 20,
+  },
+  priceText: {
     fontSize: 18,
+    color: '#2A2A2A', // Dark color for price text
+    marginBottom: 5,
+  },
+  priceValue: {
+    fontWeight: 'bold', // Bold price value for emphasis
+  },
+  filterContainer: {
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  filterButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#2A2A2A', // Dark background for filter buttons
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  filterButtonActive: {
+    backgroundColor: '#C6A76B', // Active button color
+  },
+  filterText: {
+    color: '#FFF', // Button text color
     fontWeight: 'bold',
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 20,
-    textAlign: 'center',
+  filterTextActive: {
+    color: '#1A1A1A', // Active button text color
   },
-  loading: {
+  list: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#121212',
+    paddingHorizontal: 10,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+  },
+  jewelryCard: {
+    width: (windowWidth - 40) / 2,
+    marginBottom: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#FFF', // Background color for jewelry cards
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+  },
+  jewelryImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+  },
+  jewelryDetails: {
+    padding: 10,
+  },
+  jewelryName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2A2A2A', // Dark color for jewelry names
+  },
+  jewelryPrice: {
+    fontSize: 14,
+    color: '#C6A76B', // Gold color for prices
+  },
+  whatsappButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: '#25D366', // WhatsApp green color
+    borderRadius: 30,
+    elevation: 5,
+  },
+  whatsappButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
   },
 });
 
-export default UserProfileScreen;
+export default HomeScreen;
