@@ -5,6 +5,9 @@ import firestore from '@react-native-firebase/firestore';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
+  const [adress, setAdress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -19,7 +22,7 @@ const RegisterScreen = ({ navigation }) => {
     }
 
     try {
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password, adress, city, state);
       const user = userCredential.user;
       const userID = user.uid;
 
@@ -54,6 +57,29 @@ const RegisterScreen = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="adress"
+        placeholderTextColor="#999"
+        value={adress}
+        onChangeText={setAdress}
+        keyboardType="state"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="city"
+        placeholderTextColor="#999"
+        value={city}
+        onChangeText={setCity}
+        keyboardType="city"
+      /> <TextInput
+        style={styles.input}
+        placeholder="state"
+        placeholderTextColor="#999"
+        value={state}
+        onChangeText={setState}
+        keyboardType="state"
       />
       <TextInput
         style={styles.input}

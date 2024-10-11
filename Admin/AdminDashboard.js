@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet, Button } from 'react-native';
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from '@react-native-firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-
-// Set the logout emoji image URL
 const logoutEmoji = { uri: 'https://icons.iconarchive.com/icons/custom-icon-design/pretty-office-6/128/logout-icon.png' };
 
 const AdminDashboardScreen = () => {
@@ -16,7 +14,7 @@ const AdminDashboardScreen = () => {
   const [editingItemId, setEditingItemId] = useState(null);
 
   const firestore = getFirestore();
-  const navigation = useNavigation();
+  const navigation = useNavigation();  // Hook for navigation
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -33,7 +31,7 @@ const AdminDashboardScreen = () => {
     };
 
     fetchItems();
-  }, [firestore]);
+  },);
 
   const addItem = async () => {
     if (name && price && imageUri && description && category) {
@@ -45,7 +43,11 @@ const AdminDashboardScreen = () => {
           description,
           category,
         });
-        clearForm();
+        setName('');
+        setPrice('');
+        setImageUri('');
+        setDescription('');
+        setCategory('necklace');
       } catch (error) {
         console.error('Failed to add item:', error);
       }
@@ -62,7 +64,12 @@ const AdminDashboardScreen = () => {
           description,
           category,
         });
-        clearForm();
+        setEditingItemId(null);
+        setName('');
+        setPrice('');
+        setImageUri('');
+        setDescription('');
+        setCategory('necklace');
       } catch (error) {
         console.error('Failed to update item:', error);
       }
@@ -80,23 +87,18 @@ const AdminDashboardScreen = () => {
   const startEditItem = (item) => {
     setEditingItemId(item.id);
     setName(item.name);
-    setPrice(item.price.toString());
+    setPrice(item.price);
     setImageUri(item.imageUri);
     setDescription(item.description);
     setCategory(item.category);
   };
 
-  const clearForm = () => {
-    setEditingItemId(null);
-    setName('');
-    setPrice('');
-    setImageUri('');
-    setDescription('');
-    setCategory('necklace');
-  };
-
   const filterJewelryItems = () => {
-    return category === 'All' ? jewelryItems : jewelryItems.filter(item => item.category === category);
+    if (category === 'All') {
+      return jewelryItems;
+    } else {
+      return jewelryItems.filter(item => item.category === category);
+    }
   };
 
   // Set up header options with a logout button using the custom emoji
@@ -112,22 +114,67 @@ const AdminDashboardScreen = () => {
       headerTitle: () => <Text style={styles.headerTitle}>Admin Dashboard</Text>,
     });
   }, [navigation]);
-
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Admin Dashboard</Text>
-      <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} placeholderTextColor="#888" />
-      <TextInput placeholder="Price" value={price} onChangeText={setPrice} style={styles.input} keyboardType="numeric" placeholderTextColor="#888" />
-      <TextInput placeholder="Image URL" value={imageUri} onChangeText={setImageUri} style={styles.input} placeholderTextColor="#888" />
-      <TextInput placeholder="Description" value={description} onChangeText={setDescription} style={styles.input} placeholderTextColor="#888" />
+      <TextInput
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+        style={styles.input}
+        placeholderTextColor="#888"
+      />
+      <TextInput
+        placeholder="Price"
+        value={price}
+        onChangeText={setPrice}
+        style={styles.input}
+        keyboardType="numeric"
+        placeholderTextColor="#888"
+      />
+      <TextInput
+        placeholder="Image URL"
+        value={imageUri}
+        onChangeText={setImageUri}
+        style={styles.input}
+        placeholderTextColor="#888"
+      />
+      <TextInput
+        placeholder="Description"
+        value={description}
+        onChangeText={setDescription}
+        style={styles.input}
+        placeholderTextColor="#888"
+      />
       <View style={styles.categoryContainer}>
-        {['necklace', 'bangle', 'earring', 'All'].map((cat) => (
-          <TouchableOpacity key={cat} style={[styles.categoryButton, category === cat && styles.selectedCategory]} onPress={() => setCategory(cat)}>
-            <Text style={styles.categoryText}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          style={[styles.categoryButton, category === 'necklace' && styles.selectedCategory]}
+          onPress={() => setCategory('necklace')}
+        >
+          <Text style={styles.categoryText}>Necklace</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.categoryButton, category === 'bangle' && styles.selectedCategory]}
+          onPress={() => setCategory('bangle')}
+        >
+          <Text style={styles.categoryText}>Bangle</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.categoryButton, category === 'earring' && styles.selectedCategory]}
+          onPress={() => setCategory('earring')}
+        >
+          <Text style={styles.categoryText}>Earring</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.categoryButton, category === 'All' && styles.selectedCategory]}
+          onPress={() => setCategory('All')}
+        >
+          <Text style={styles.categoryText}>All</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.button} onPress={editingItemId ? updateItem : addItem}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={editingItemId ? updateItem : addItem}
+      >
         <Text style={styles.buttonText}>{editingItemId ? 'Update Item' : 'Add Item'}</Text>
       </TouchableOpacity>
       <FlatList

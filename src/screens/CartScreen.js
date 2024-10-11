@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ToastAndroid, Image, Modal } from 'react-native';
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from '@react-native-firebase/firestore';
+import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
 const { width } = Dimensions.get('window');
@@ -12,21 +12,21 @@ const CartScreen = ({ navigation }) => {
   const firestore = getFirestore();
 
   useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const currentUser = auth().currentUser;
-        if (!currentUser) { return; } // No user logged in
+    const currentUser = auth().currentUser;
+    if (!currentUser) { return; } // No user logged in
 
-        const cartRef = collection(firestore, 'users', currentUser.uid, 'cartItems');
-        const querySnapshot = await getDocs(cartRef);
-        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCartItems(items);
-      } catch (error) {
-        console.error('Failed to fetch cart items:', error);
-      }
-    };
+    const cartRef = collection(firestore, 'users', currentUser.uid, 'cartItems');
 
-    fetchCartItems();
+    // Set up real-time listener for cart items
+    const unsubscribe = onSnapshot(cartRef, (querySnapshot) => {
+      const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCartItems(items);
+    }, (error) => {
+      console.error('Failed to fetch cart items:', error);
+    });
+
+    // Clean up the listener when the component is unmounted
+    return () => unsubscribe();
   }, [firestore]);
 
   const handleItemPress = (item) => {
@@ -48,15 +48,12 @@ const CartScreen = ({ navigation }) => {
         price: selectedItem.price,
         quantity: selectedItem.quantity,
         imageUri: selectedItem.imageUri,
-        purchasedAt: new Date(), // Optional: to track when it was purchased
+        purchasedAt: new Date(),
       });
 
       // Remove the purchased item from the cart
       const cartItemRef = doc(firestore, 'users', currentUser.uid, 'cartItems', selectedItem.id);
       await deleteDoc(cartItemRef);
-
-      // Update local state
-      setCartItems(cartItems.filter(item => item.id !== selectedItem.id));
 
       // Show success message
       ToastAndroid.show(`${selectedItem.name} purchased!`, ToastAndroid.SHORT);
@@ -64,28 +61,26 @@ const CartScreen = ({ navigation }) => {
       console.error('Failed to purchase item:', error);
     } finally {
       setModalVisible(false);
-      setSelectedItem(null); // Clear the selected item
+      setSelectedItem(null);
     }
   };
 
   const handleCheckout = async () => {
     try {
       const currentUser = auth().currentUser;
-      if (!currentUser) { return; } // No user logged in
+      if (!currentUser) { return; }
 
       // Handle overall checkout logic here
 
       ToastAndroid.show('Checkout successful!', ToastAndroid.SHORT);
-      // Clear cart logic can be added here
     } catch (error) {
       console.error('Checkout failed:', error);
     }
   };
 
- const calculateTotalPrice = () => {
+  const calculateTotalPrice = () => {
     return cartItems.reduce((total, item) => total + (Number(item.price) * Number(item.quantity)), 0).toFixed(2);
-};
-
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -101,13 +96,12 @@ const CartScreen = ({ navigation }) => {
                   <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemPrice}>€{(Number(item.price) * Number(item.quantity))}</Text>
+                    <Text style={styles.itemPrice}>€{(Number(item.price) * Number(item.quantity)).toFixed(2)}</Text>
                     <Text style={styles.itemQuantity}>Quantity: {item.quantity}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
             ))}
-
 
             <View style={styles.totalContainer}>
               <Text style={styles.totalText}>Total Price: €{calculateTotalPrice()}</Text>
@@ -218,18 +212,18 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   checkoutButton: {
-    backgroundColor: '#FF6666',
+    backgroundColor: '#FFB6C1',
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 20,
+    marginBottom: 40,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // Modal styles
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -284,7 +278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalCloseButton: {
-    backgroundColor: '#555',
+    backgroundColor: '#333',
     padding: 10,
     borderRadius: 8,
     width: '100%',

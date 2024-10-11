@@ -61,7 +61,7 @@ const AdminCartScreen = () => {
             ) : (
                 usersCartItems.map((userData, index) => (
                     <View key={index} style={styles.userContainer}>
-                        <Text style={styles.userId}>User ID: {userData.userId}</Text>
+                        <Text style={styles.userId}>User ID: {userData.firstName}</Text>
                         <Text style={styles.userEmail}>Email: {userData.userEmail}</Text>
                         {userData.cartItems.map((cartItem) => (
                             <View key={cartItem.id} style={styles.cartItem}>

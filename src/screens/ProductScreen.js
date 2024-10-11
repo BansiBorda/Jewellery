@@ -48,7 +48,7 @@ const ProductScreen = ({ route, navigation }) => {
 
             const cartRef = collection(firestore, 'users', currentUser.uid, 'cartItems');
             // Add the item along with its quantity to Firestore
-            await addDoc(cartRef, { ...item, quantity }); 
+            await addDoc(cartRef, { ...item, quantity });
             ToastAndroid.show('Added to cart!', ToastAndroid.SHORT);
             navigation.navigate('Cart'); // Navigate to Cart screen after adding
         } catch (error) {
@@ -103,21 +103,22 @@ const ProductScreen = ({ route, navigation }) => {
                 <View style={styles.infoContainer}>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoTitle}>Width</Text>
-                        <Text style={styles.infoValue}>2-3 mm</Text>
+                        <Text style={styles.infoValue}>{item.width || 'N/A'}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoTitle}>Weight</Text>
-                        <Text style={styles.infoValue}>18.0g</Text>
+                        <Text style={styles.infoValue}>{item.weight || 'N/A'}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoTitle}>Gold Karat</Text>
-                        <Text style={styles.infoValue}>10k</Text>
+                        <Text style={styles.infoValue}>{item.karat || 'N/A'}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoTitle}>Warranty</Text>
-                        <Text style={styles.infoValue}>90 days</Text>
+                        <Text style={styles.infoValue}>{item.warranty || 'N/A'}</Text>
                     </View>
                 </View>
+
 
                 <View style={styles.controlsContainer}>
                     <View style={styles.pickerContainer}>
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     pageIndicator: {
-        color: '#333',
+        color: '#333', // Darker color for better contrast
         fontSize: 16,
     },
     wishlistIcon: {
@@ -199,6 +200,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginVertical: 10,
+        color: '#333', // Darker color for better visibility
     },
     infoContainer: {
         marginVertical: 20,
@@ -209,10 +211,12 @@ const styles = StyleSheet.create({
         marginVertical: 5,
     },
     infoTitle: {
-        color: '#555',
+        color: '#555', // Use a darker color
+        fontSize: 16,
     },
     infoValue: {
         fontWeight: 'bold',
+        color: '#333', // Darker color for better contrast
     },
     controlsContainer: {
         marginVertical: 20,
@@ -222,6 +226,7 @@ const styles = StyleSheet.create({
     },
     pickerLabel: {
         fontSize: 16,
+        color: '#333', // Darker color
     },
     picker: {
         height: 50,
@@ -240,10 +245,12 @@ const styles = StyleSheet.create({
         width: 30,
         textAlign: 'center',
         fontSize: 20,
+        color: '#333', // Ensure buttons are visible
     },
     quantityText: {
         marginHorizontal: 15,
         fontSize: 18,
+        color: '#333', // Darker text color
     },
     priceContainer: {
         marginVertical: 10,
@@ -251,9 +258,10 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 24,
         fontWeight: 'bold',
+        color: '#333', // Ensure price is visible
     },
     addToCartButton: {
-        backgroundColor: '#5cb85c',
+        backgroundColor: '#FF9999',
         padding: 15,
         borderRadius: 5,
         alignItems: 'center',
@@ -263,5 +271,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
 });
+
 
 export default ProductScreen;
